@@ -38,30 +38,27 @@ public class DownCounter extends AbstractIC {
         return "DOWN COUNTER";
     }
     
-    
-    public String validateEnvironment(Sign sign) {
-        String id = getSign().getLines()[2];
-        if (id == null || !id.matches("^[0-9]+:(INF|ONCE)$"))
-            return "Specify counter configuration on line 3.";
         
-        getSign().getLines()[3] = "0";  //... do we really do this? and when exactly?!
-        
-        return null;
-    }
-    
     @Override
     public void trigger(ChipState chip) {
+        Sign sign = getSign();
+    
         // Get IC configuration data from line 3 of sign
-        String line3 = getSign().getLines()[2];
+        String line3 = sign.getLine(2);
         String[] config = line3.split(":");
         
         int resetVal = Integer.parseInt(config[0]);
         boolean inf = config[1].equals("INF");
 
+        if (sign.getLine(3).isEmpty()) {
+           sign.setLine(3, Integer.toString(resetVal));
+           sign.update();
+        }
+
         // Get current counter value from line 4 of sign
-        String line4 = getSign().getLines()[3];
+        String line4 = sign.getLine(3);
         int curVal = 0;
-        
+                
         try {
 			curVal = Integer.parseInt(line4);
 		} catch (Exception e) {
@@ -79,16 +76,19 @@ public class DownCounter extends AbstractIC {
                 curVal--;
             }
 
-            // Set output to high if we're at 0, otherwise low
-            chip.set(3, (curVal == 0));
         // If reset input triggered, reset counter value
         } else if (chip.isTriggered(1) && chip.get(1)) {
             curVal = resetVal;
         }
 
+        // Set output to high if we're at 0, otherwise low
+        chip.set(3, (curVal == 0));
+
         // Update counter value stored on sign if it's changed
-        if (curVal != oldVal)
-            getSign().setLine(3,Integer.toString(curVal));
+        if (curVal != oldVal) {
+            sign.setLine(3,Integer.toString(curVal));
+            sign.update();
+        }
     }
     
     public static class Factory extends AbstractICFactory {
