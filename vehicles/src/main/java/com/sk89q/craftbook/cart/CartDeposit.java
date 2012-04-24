@@ -4,6 +4,8 @@ import com.sk89q.craftbook.RedstoneUtil.Power;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.HashMap;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -63,16 +65,54 @@ public class CartDeposit extends CartMechanism {
         ArrayList<ItemStack> leftovers = new ArrayList<ItemStack>();
         
         if (collecting) {
+            ArrayList<Integer> idList = new ArrayList<Integer>();
+            /* Line 3 & 4 of sign can contain a ';'-separated ItemID list of materials that are to be transferred.
+               If no item id's were found in line 3 and 4 all items are transferred.
+               This feature can be used to sort items into chests. */
+                          
+            /* create itemId-list */
+            String lines = blocks.getSign().getLine(2) + ";" + blocks.getSign().getLine(3);
+            String idStringList[] = lines.split(";");
+            for (int i = 0; i < idStringList.length; ++i) {
+               try {
+                  idList.add(Integer.parseInt(idStringList[i]));
+               } catch (NumberFormatException e) {
+               }
+            }
+       
+            ArrayList<ItemStack> transferitems = new ArrayList<ItemStack>();
+            if (!idList.isEmpty()) {
+               /* ItemID-based collection */
+               //System.out.println("ItemID-based collection");               
+
+               HashMap<Integer, ItemStack> slotMap = new HashMap<Integer, ItemStack>();
+               for (Integer id: idList) {
+                  /* find all Item slots, that contain material to transfer */
+                  slotMap.putAll(cartinventory.all(id));
+                  /* remove matching material from cartinventory */
+                  cartinventory.remove(id);
+               }
+               transferitems.addAll(slotMap.values());
+            } else {
+               /* collect all items */
+               //System.out.println("collect all items");               
+               transferitems.addAll(Arrays.asList(cartinventory.getContents()));
+               cartinventory.clear();
+            }
+            
             // collecting
-            ArrayList<ItemStack> transferitems = new ArrayList<ItemStack>(Arrays.asList(cartinventory.getContents()));
-            cartinventory.clear();
             while (transferitems.remove(null)) continue;
             
             // is cart non-empty?
             if (transferitems.size() <= 0) return;
             
-            //System.out.println("collecting " + transferitems.size() + " item stacks");
-            //for (ItemStack stack: transferitems) System.out.println("collecting " + stack.getAmount() + " items of type " + stack.getType().toString());
+            /* debug            
+            System.out.println("collecting " + transferitems.size() + " item stacks");
+            for (ItemStack stack: transferitems) System.out.println("collecting " + stack.getAmount() + " items of type " + stack.getType().toString());
+            
+            System.out.println("left over " + leftovers.size() + " item stacks");
+            for (ItemStack stack: leftovers) System.out.println("leftover " + stack.getAmount() + " items of type " + stack.getType().toString());
+            */
             
             for (Chest container: containers) {
                 if (transferitems.size() <= 0) break;
