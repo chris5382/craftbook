@@ -100,5 +100,15 @@ public class DownCounter extends AbstractIC {
         public IC create(Sign sign) {
             return new DownCounter(getServer(), sign);
         }
+
+        @Override
+        public void verify(Sign sign) throws ICVerificationException 
+        {
+            String id = sign.getLine(2);
+            if (id == null || !id.matches("^[0-9]+:(INF|ONCE)$"))
+        		    throw new ICVerificationException("Specify counter configuration on line 3.");
+
+        	   sign.setLine(3, "0");
+        }
     }
 }
