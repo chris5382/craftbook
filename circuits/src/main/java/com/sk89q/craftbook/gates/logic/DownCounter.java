@@ -106,9 +106,9 @@ public class DownCounter extends AbstractIC {
         {
             String id = sign.getLine(2);
             if (id == null || !id.matches("^[0-9]+:(INF|ONCE)$"))
-        		    throw new ICVerificationException("Specify counter configuration on line 3.");
+                throw new ICVerificationException("Specify counter configuration on line 3.");
 
-        	   sign.setLine(3, "0");
+            sign.setLine(3, "0");
         }
     }
 }
