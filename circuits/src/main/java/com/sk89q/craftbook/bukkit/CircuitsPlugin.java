@@ -18,6 +18,8 @@
 
 package com.sk89q.craftbook.bukkit;
 
+import java.io.File;
+
 import org.bukkit.Chunk;
 import org.bukkit.Server;
 import org.bukkit.World;
@@ -44,21 +46,36 @@ public class CircuitsPlugin extends BaseBukkitPlugin {
     protected ICManager icManager;
     private PermissionsResolverManager perms;
     private MechanicManager manager;
+    private static CircuitsPlugin instance;
+    
+    public static Server server;
+    
+    public static CircuitsPlugin getInst()
+    {
+    	return instance;
+    }
     
     @Override
     public void onEnable() {
         super.onEnable();
         
+        instance = this;
+        server = getServer();
+        
         createDefaultConfiguration("config.yml");
         createDefaultConfiguration("custom-ics.txt");
         config = new CircuitsConfiguration(getConfig(), getDataFolder());
-        
+                
         PermissionsResolverManager.initialize(this);
         perms = PermissionsResolverManager.getInstance();
                 
         manager = new MechanicManager(this);
         MechanicListenerAdapter adapter = new MechanicListenerAdapter(this);
         adapter.register(manager);
+        
+        File midi = new File(getDataFolder(),"midi/");
+        if(!midi.exists())
+        	midi.mkdir();
         
         registerICs();
         
@@ -102,14 +119,16 @@ public class CircuitsPlugin extends BaseBukkitPlugin {
         icManager.register("MC1111", new WirelessReceiver.Factory(server, true), familySISO);
         icManager.register("MC1200", new EntitySpawner.Factory(server, true), familySISO);     // Restricted
         icManager.register("MC1201", new ItemDispenser.Factory(server, true), familySISO);  	 // Restricted
-        //Missing: 1202 (replaced by dispenser?)                                                 // Restricted
+        icManager.register("MC1202", new ChestDispenser.Factory(server, true), familySISO);                                               // Restricted
         icManager.register("MC1203", new LightningSummon.Factory(server, true), familySISO);     // Restricted
         icManager.register("MC1204", new EntityTrap.Factory(server, true), familySISO);     // Restricted
         icManager.register("MC1205", new SetBlockAbove.Factory(server), familySISO);             // Restricted
         icManager.register("MC1206", new SetBlockBelow.Factory(server), familySISO);             // Restricted
         icManager.register("MC1207", new FlexibleSetBlock.Factory(server), familySISO);          // Restricted
         icManager.register("MC1208", new MultipleSetBlock.Factory(server), familySISO);
-        icManager.register("MC1209", new ChestCollector.Factory(server, true), familySISO);		// Restricted
+        icManager.register("MC1209", new ChestCollector.Factory(server, true), familySISO);
+        icManager.register("MC1215", new SetBlockAboveChest.Factory(server), familySISO);             // Restricted
+        icManager.register("MC1216", new SetBlockBelowChest.Factory(server), familySISO);             // Restricted
         icManager.register("MC1230", new DaySensor.Factory(server, true), familySISO);
         icManager.register("MC1231", new TimeControl.Factory(server, true), familySISO);         // Restricted
         icManager.register("MC1240", new ArrowShooter.Factory(server, true), familySISO);        // Restricted
@@ -120,6 +139,7 @@ public class CircuitsPlugin extends BaseBukkitPlugin {
         icManager.register("MC1261", new LavaSensor.Factory(server, true), familySISO);
         icManager.register("MC1262", new LightSensor.Factory(server, true), familySISO);
         icManager.register("MC1263", new BlockSensor.Factory(server, true), familySISO);
+        icManager.register("MC1270", new Melody.Factory(server), familySISO);
         icManager.register("MC1420", new ClockDivider.Factory(server, true), familySISO);
         icManager.register("MC1510", new MessageSender.Factory(server, true), familySISO);
         
@@ -161,6 +181,7 @@ public class CircuitsPlugin extends BaseBukkitPlugin {
         icManager.register("MC0263", new BlockSensorST.Factory(server), familySISO);
         icManager.register("MC0420", new Clock.Factory(server), familySISO);
         icManager.register("MC0421", new Monostable.Factory(server), familySISO);
+        icManager.register("MC0500", new CustomClock.Factory(server), familySISO);
         //Missing: 0020 self-triggered RNG (may cause server load issues)
 	//Missing: 0262
 	//Missing: 0420     
